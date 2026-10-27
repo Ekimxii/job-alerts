@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "*/10 * * * *"   # every 10 minutes (GitHub may delay runs a few minutes)
   workflow_dispatch:          # lets you click "Run workflow" by hand
+  push:                       # test run whenever the checker itself changes
+    branches: [main]
+    paths: [check_jobs.py, .github/workflows/jobs.yml]
 
 permissions:
   contents: write             # needed to save seen.json back to the repo

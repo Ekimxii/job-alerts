@@ -61,12 +61,32 @@ def job(company, title, url, location="", jid=None):
             "location": location or "", "id": f"{company}:{jid or url}"}
 
 # ---------------- sources ----------------
-WORKDAY = {  # company: (host, tenant, site)
+WORKDAY = {  # company: (host, tenant, site); host "myworkdaysite" means wd1.myworkdaysite.com
     "Salesforce": ("salesforce.wd12", "salesforce", "External_Career_Site"),
     "Cisco": ("cisco.wd5", "cisco", "Cisco_Careers"),
     "NVIDIA": ("nvidia.wd5", "nvidia", "NVIDIAExternalCareerSite"),
     "Adobe": ("adobe.wd5", "adobe", "external_experienced"),
     "Intel": ("intel.wd1", "intel", "External"),
+    "Capital One": ("capitalone.wd12", "capitalone", "Capital_One"),
+    "PayPal": ("paypal.wd1", "paypal", "jobs"),
+    "Mastercard": ("mastercard.wd1", "mastercard", "CorporateCareers"),
+    "Workday": ("workday.wd5", "workday", "Workday"),
+    "Disney": ("disney.wd5", "disney", "disneycareer"),
+    "Morgan Stanley": ("ms.wd5", "ms", "External"),
+    "Bank of America": ("ghr.wd1", "ghr", "Lateral-US"),
+    "Wells Fargo": ("myworkdaysite", "wf", "WellsFargoJobs"),
+    "Fidelity": ("fmr.wd1", "fmr", "FidelityCareers"),
+    "Target": ("target.wd5", "target", "targetcareers"),
+    "Nike": ("nike.wd1", "nike", "nke"),
+    "T-Mobile": ("tmobile.wd1", "tmobile", "External"),
+    "Verizon": ("verizon.wd12", "verizon", "verizon-careers"),
+    "Snap": ("myworkdaysite", "snapchat", "snap"),
+    "Autodesk": ("autodesk.wd1", "autodesk", "Ext"),
+    "CVS Health": ("cvshealth.wd1", "cvshealth", "CVS_Health_Careers"),
+    "Humana": ("humana.wd5", "humana", "Humana_External_Career_Site"),
+    "Zillow": ("zillow.wd5", "zillow", "Zillow_Group_External"),
+    "Allstate": ("allstate.wd5", "allstate", "allstate_careers"),
+    "HPE": ("hpe.wd5", "hpe", "Jobsathpe"),
 }
 GREENHOUSE = {"Airbnb": "airbnb", "Stripe": "stripe", "Pinterest": "pinterest",
               "Databricks": "databricks", "Lyft": "lyft", "Figma": "figma", "Scale AI": "scaleai"}
@@ -80,16 +100,29 @@ SIMPLIFY_COMPANIES = {"meta", "uber", "linkedin", "tesla", "bloomberg", "spotify
                       "millennium", "point72", "five rings", "tower research capital", "radix trading"}
 
 def src_workday():
-    out = []
+    out, errors = [], []
     for company, (host, tenant, site) in WORKDAY.items():
-        api = f"https://{host}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
-        for offset in (0, 20, 40):
-            d = fetch_json(api, {"appliedFacets": {}, "limit": 20, "offset": offset, "searchText": "intern"})
-            for p in d.get("jobPostings", []):
-                out.append(job(company, p["title"],
-                               f"https://{host}.myworkdayjobs.com/en-US/{site}{p['externalPath']}",
-                               p.get("locationsText", ""), p["externalPath"]))
-            time.sleep(0.5)
+        if host == "myworkdaysite":
+            api = f"https://wd1.myworkdaysite.com/wday/cxs/{tenant}/{site}/jobs"
+            public = f"https://wd1.myworkdaysite.com/en-US/recruiting/{tenant}/{site}"
+        else:
+            api = f"https://{host}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
+            public = f"https://{host}.myworkdayjobs.com/en-US/{site}"
+        try:
+            for offset in (0, 20, 40):
+                # Workday returns newest first; checking the 60 newest every 10 minutes is plenty
+                d = fetch_json(api, {"appliedFacets": {}, "limit": 20, "offset": offset,
+                                     "searchText": "intern internship"})
+                for p in d.get("jobPostings") or []:
+                    path = p.get("externalPath")
+                    if not path or not p.get("title"):
+                        continue
+                    out.append(job(company, p["title"], public + path, p.get("locationsText", ""), path))
+                time.sleep(0.3)
+        except Exception as e:  # one broken company never stops the rest
+            errors.append(f"{company}: {type(e).__name__}")
+    if errors:
+        print("Workday errors:", errors)
     return out
 
 def src_greenhouse():
