@@ -87,6 +87,7 @@ WORKDAY = {  # company: (host, tenant, site); host "myworkdaysite" means wd1.myw
     "Zillow": ("zillow.wd5", "zillow", "Zillow_Group_External"),
     "Allstate": ("allstate.wd5", "allstate", "allstate_careers"),
     "HPE": ("hpe.wd5", "hpe", "Jobsathpe"),
+    "Visa": ("visa.wd5", "visa", "Visa"),
 }
 GREENHOUSE = {"Airbnb": "airbnb", "Stripe": "stripe", "Pinterest": "pinterest",
               "Databricks": "databricks", "Lyft": "lyft", "Figma": "figma", "Scale AI": "scaleai"}
@@ -216,6 +217,9 @@ SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_as
            "Amazon": src_amazon, "Microsoft": src_microsoft, "Netflix": src_netflix,
            "Apple": src_apple, "Google": src_google, "Simplify list (Meta, quant, etc.)": src_simplify}
 
+DIRECT_COMPANIES = {c.lower() for c in [*WORKDAY, *GREENHOUSE, *ASHBY,
+                                        "Amazon", "Microsoft", "Netflix", "Apple", "Google"]}
+
 # ---------------- notify ----------------
 def notify(title, message, click=None, tags="briefcase"):
     if DRY_RUN or not NTFY_TOPIC:
@@ -234,22 +238,31 @@ def main():
     first_run = not SEEN_FILE.exists()
     seen = json.loads(SEEN_FILE.read_text()) if not first_run else {"ids": [], "titles": []}
     seen_ids, seen_titles = set(seen["ids"]), set(seen["titles"])
+    # companies seen before; a newly added company is saved quietly on its first run
+    known_companies = set(seen.get("companies") or {t.split("|")[0] for t in seen_titles})
+    quiet, fetched_companies = [], set()
     status, new = {}, []
     for name, fn in SOURCES.items():
         try:
             jobs = fn()
+            fetched_companies |= {j["company"].lower() for j in jobs}
             matches = [j for j in jobs if title_matches(j["title"])]
             status[name] = {"ok": True, "fetched": len(jobs), "matching": len(matches)}
             for j in matches:
                 if j["id"] in seen_ids or norm_key(j) in seen_titles:
                     continue
-                new.append(j); seen_ids.add(j["id"]); seen_titles.add(norm_key(j))
+                c = j["company"].lower()
+                is_newly_added = c in DIRECT_COMPANIES and c not in known_companies
+                (quiet if is_newly_added else new).append(j)
+                seen_ids.add(j["id"]); seen_titles.add(norm_key(j))
         except Exception as e:  # one broken site never stops the others
             status[name] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
         print(name, status[name])
 
+    if quiet:
+        print(f"Quietly saved {len(quiet)} postings from newly added companies")
     if first_run:
-        notify("Job alerts are on", f"Now watching {len(new)} matching postings. "
+        notify("Job alerts are on", f"Now watching {len(new) + len(quiet)} matching postings. "
                "You'll get a ping for each new one from here on.", tags="white_check_mark")
     else:
         for j in new[:25]:
@@ -258,7 +271,9 @@ def main():
             notify("More new postings", f"{len(new) - 25} more matches this round; check the career sites.")
 
     if not DRY_RUN:
-        SEEN_FILE.write_text(json.dumps({"ids": sorted(seen_ids), "titles": sorted(seen_titles)}, indent=0))
+        companies = known_companies | fetched_companies
+        SEEN_FILE.write_text(json.dumps({"ids": sorted(seen_ids), "titles": sorted(seen_titles),
+                                         "companies": sorted(companies)}, indent=0))
         STATUS_FILE.write_text(json.dumps({"checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                                            "new_this_run": len(new), "sources": status}, indent=2))
     else:
