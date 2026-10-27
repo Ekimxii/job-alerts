@@ -225,7 +225,8 @@ def notify(title, message, click=None, tags="briefcase"):
     if DRY_RUN or not NTFY_TOPIC:
         print("NOTIFY:", title, "|", message.replace("\n", " | "))
         return
-    h = {"Title": title.encode("ascii", "ignore").decode() or "Job alert", "Tags": tags}
+    # "high" priority = long vibration and iOS time-sensitive alert, so it pops up as a banner
+    h = {"Title": title.encode("ascii", "ignore").decode() or "Job alert", "Tags": tags, "Priority": "high"}
     if click:
         h["Click"] = click
     req = urllib.request.Request(f"https://ntfy.sh/{NTFY_TOPIC}", data=message.encode(), headers=h)
