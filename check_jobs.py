@@ -1,0 +1,237 @@
+"""Erin's job alerts: checks big tech + quant career sites for new
+data science / ML / data engineering / research / quant internships
+and sends a push notification through ntfy.
+
+Run every 10 minutes by GitHub Actions (.github/workflows/jobs.yml).
+Set DRY_RUN=1 to print matches without notifying or saving.
+"""
+import json, os, re, sys, time, pathlib, urllib.request, urllib.parse, http.cookiejar
+import xml.etree.ElementTree as ET
+
+ROOT = pathlib.Path(__file__).parent
+SEEN_FILE = ROOT / "seen.json"
+STATUS_FILE = ROOT / "status.json"
+NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
+DRY_RUN = os.environ.get("DRY_RUN") == "1"
+UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/124 Safari/537.36",
+      "Accept": "application/json, text/xml, */*"}
+
+# ---------------- what counts as a match ----------------
+INTERN_RE = re.compile(r"\bintern(s|ship|ships)?\b|\bco-?op\b|student researcher|\bapprentice", re.I)
+FIELD_RE = re.compile(
+    r"data scien|data scientist|machine learning|\bml\b|\bai\b|\bai/ml\b|artificial intelligence|"
+    r"applied scien|research|\bnlp\b|natural language|deep learning|computer vision|\bllm|"
+    r"data engineer|data & ai|data and ai|data platform|analytics engineer|"
+    r"quant|quantitative|trading|trader|algorithmic", re.I)
+GRAD_ONLY_RE = re.compile(r"\bph\.?\s?d\b|doctoral|\bmba\b|\bmasters?\b|master['’]s|\bm\.?s\.?\b|postdoc|"
+                          r"graduate intern|\bm1\b|\bm2\b", re.I)
+EXCLUDE_RE = re.compile(r"program manager|ux research|user research|experience research|marketing|"
+                        r"trading card|collectible|security research|recruit", re.I)
+UNDERGRAD_RE = re.compile(r"\bb\.?s\.?\b|bachelor|undergrad|\bba\b|\bbs/ms\b", re.I)
+
+def title_matches(title):
+    if not INTERN_RE.search(title) or not FIELD_RE.search(title):
+        return False
+    # skip roles that are explicitly PhD / Master's / MBA only
+    if GRAD_ONLY_RE.search(title) and not UNDERGRAD_RE.search(title):
+        return False
+    if EXCLUDE_RE.search(title):
+        return False
+    # skip past terms (e.g. "Fall 2026") but keep anything mentioning 2027
+    if "2026" in title and "2027" not in title and "winter" not in title.lower():
+        return False
+    return True
+
+# ---------------- http helpers ----------------
+def fetch(url, data=None, headers=None, opener=None, timeout=30):
+    h = dict(UA); h.update(headers or {})
+    body = None
+    if data is not None:
+        body = json.dumps(data).encode(); h.setdefault("Content-Type", "application/json")
+    req = urllib.request.Request(url, data=body, headers=h)
+    with (opener.open(req, timeout=timeout) if opener else urllib.request.urlopen(req, timeout=timeout)) as r:
+        return r.read().decode("utf-8", "replace"), r.headers
+
+def fetch_json(*a, **k):
+    return json.loads(fetch(*a, **k)[0])
+
+def job(company, title, url, location="", jid=None):
+    return {"company": company, "title": " ".join(title.split()), "url": url,
+            "location": location or "", "id": f"{company}:{jid or url}"}
+
+# ---------------- sources ----------------
+WORKDAY = {  # company: (host, tenant, site)
+    "Salesforce": ("salesforce.wd12", "salesforce", "External_Career_Site"),
+    "Cisco": ("cisco.wd5", "cisco", "Cisco_Careers"),
+    "NVIDIA": ("nvidia.wd5", "nvidia", "NVIDIAExternalCareerSite"),
+    "Adobe": ("adobe.wd5", "adobe", "external_experienced"),
+    "Intel": ("intel.wd1", "intel", "External"),
+}
+GREENHOUSE = {"Airbnb": "airbnb", "Stripe": "stripe", "Pinterest": "pinterest",
+              "Databricks": "databricks", "Lyft": "lyft", "Figma": "figma", "Scale AI": "scaleai"}
+ASHBY = {"OpenAI": "openai", "Snowflake": "snowflake"}
+# big tech without a usable public feed, plus quant firms: covered through
+# SimplifyJobs' community-maintained internship list (slower, usually hours)
+SIMPLIFY_COMPANIES = {"meta", "uber", "linkedin", "tesla", "bloomberg", "spotify", "ibm", "oracle",
+                      "jane street", "citadel", "citadel securities", "two sigma", "hudson river trading",
+                      "jump trading", "d. e. shaw", "de shaw", "the d. e. shaw group", "imc", "optiver",
+                      "susquehanna international group (sig)", "sig", "akuna capital", "drw", "virtu financial",
+                      "millennium", "point72", "five rings", "tower research capital", "radix trading"}
+
+def src_workday():
+    out = []
+    for company, (host, tenant, site) in WORKDAY.items():
+        api = f"https://{host}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
+        for offset in (0, 20, 40):
+            d = fetch_json(api, {"appliedFacets": {}, "limit": 20, "offset": offset, "searchText": "intern"})
+            for p in d.get("jobPostings", []):
+                out.append(job(company, p["title"],
+                               f"https://{host}.myworkdayjobs.com/en-US/{site}{p['externalPath']}",
+                               p.get("locationsText", ""), p["externalPath"]))
+            time.sleep(0.5)
+    return out
+
+def src_greenhouse():
+    out = []
+    for company, board in GREENHOUSE.items():
+        for p in fetch_json(f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs")["jobs"]:
+            out.append(job(company, p["title"], p["absolute_url"], (p.get("location") or {}).get("name", ""), p["id"]))
+    return out
+
+def src_ashby():
+    out = []
+    for company, board in ASHBY.items():
+        for p in fetch_json(f"https://api.ashbyhq.com/posting-api/job-board/{board}")["jobs"]:
+            out.append(job(company, p["title"], p.get("jobUrl", ""), p.get("location", ""), p.get("id")))
+    return out
+
+def src_amazon():
+    d = fetch_json("https://www.amazon.jobs/en/search.json?base_query=intern&result_limit=100&sort=recent")
+    return [job("Amazon", p["title"], "https://www.amazon.jobs" + p["job_path"],
+                p.get("normalized_location") or p.get("location", ""), p.get("id_icims") or p["job_path"])
+            for p in d.get("jobs", [])]
+
+def src_microsoft():
+    d = fetch_json("https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com"
+                   "&query=intern&start=0&sort_by=timestamp")
+    return [job("Microsoft", p["name"], f"https://apply.careers.microsoft.com/careers/job/{p['id']}",
+                "; ".join(p.get("standardizedLocations") or p.get("locations") or []), p["id"])
+            for p in d["data"]["positions"]]
+
+def src_netflix():
+    d = fetch_json("https://explore.jobs.netflix.net/api/apply/v2/jobs?domain=netflix.com"
+                   "&query=intern&num=50&sort_by=timestamp")
+    return [job("Netflix", p["name"], p.get("canonicalPositionUrl", ""), p.get("location", ""), p["id"])
+            for p in d.get("positions", [])]
+
+def src_apple():
+    cj = http.cookiejar.CookieJar()
+    op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    _, hdrs = fetch("https://jobs.apple.com/api/v1/CSRFToken", opener=op)
+    h = {"X-Apple-CSRF-Token": hdrs.get("X-Apple-CSRF-Token", ""), "Origin": "https://jobs.apple.com",
+         "Referer": "https://jobs.apple.com/en-us/search"}
+    out = []
+    for page in (1, 2, 3):
+        d = fetch_json("https://jobs.apple.com/api/v1/search",
+                       {"query": "intern", "filters": {}, "page": page, "locale": "en-us", "sort": "newest",
+                        "format": {"longDate": "MMMM D, YYYY", "mediumDate": "MMM D, YYYY"}},
+                       headers=h, opener=op)
+        res = d.get("res", d)
+        for p in res.get("searchResults", []):
+            loc = ", ".join(l.get("name", "") for l in (p.get("locations") or []) if isinstance(l, dict))
+            out.append(job("Apple", p.get("postingTitle", ""),
+                           f"https://jobs.apple.com/en-us/details/{p.get('positionId')}/{p.get('transformedPostingTitle', '')}",
+                           loc, p.get("positionId")))
+    return out
+
+def src_google():
+    xml_text, _ = fetch("https://www.google.com/about/careers/applications/jobs/feed.xml", timeout=60)
+    root = ET.fromstring(xml_text)
+    out = []
+    for j in root.iter("job"):
+        title = (j.findtext("title") or "").strip()
+        if not INTERN_RE.search(title):
+            continue
+        jid = j.findtext("jobid") or ""
+        url = j.findtext("url") or f"https://www.google.com/about/careers/applications/jobs/results/{jid}"
+        locs = [l.findtext("city") or l.text or "" for l in j.iter("location")]
+        out.append(job("Google", title, url, "; ".join(x.strip() for x in locs if x and x.strip())[:120], jid))
+    return out
+
+def src_simplify():
+    d = fetch_json("https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json",
+                   timeout=60)
+    out = []
+    for p in d:
+        if not p.get("active") or not p.get("is_visible", True):
+            continue
+        company = p.get("company_name", "")
+        is_quant = "quant" in (p.get("category") or "").lower()
+        if company.lower() not in SIMPLIFY_COMPANIES and not is_quant:
+            continue
+        degrees = p.get("degrees") or []
+        if degrees and not any("bachelor" in x.lower() for x in degrees):
+            continue  # PhD / Master's only
+        title = p.get("title", "")
+        if not INTERN_RE.search(title):
+            title = title + " (Intern)"  # everything on this list is an internship
+        out.append(job(company, title, p.get("url", ""), ", ".join(p.get("locations") or []), p.get("id")))
+    return out
+
+SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby,
+           "Amazon": src_amazon, "Microsoft": src_microsoft, "Netflix": src_netflix,
+           "Apple": src_apple, "Google": src_google, "Simplify list (Meta, quant, etc.)": src_simplify}
+
+# ---------------- notify ----------------
+def notify(title, message, click=None, tags="briefcase"):
+    if DRY_RUN or not NTFY_TOPIC:
+        print("NOTIFY:", title, "|", message.replace("\n", " | "))
+        return
+    h = {"Title": title.encode("ascii", "ignore").decode() or "Job alert", "Tags": tags}
+    if click:
+        h["Click"] = click
+    req = urllib.request.Request(f"https://ntfy.sh/{NTFY_TOPIC}", data=message.encode(), headers=h)
+    urllib.request.urlopen(req, timeout=20).read()
+
+def norm_key(j):
+    return j["company"].lower() + "|" + re.sub(r"[^a-z0-9]+", " ", j["title"].lower()).strip()
+
+def main():
+    first_run = not SEEN_FILE.exists()
+    seen = json.loads(SEEN_FILE.read_text()) if not first_run else {"ids": [], "titles": []}
+    seen_ids, seen_titles = set(seen["ids"]), set(seen["titles"])
+    status, new = {}, []
+    for name, fn in SOURCES.items():
+        try:
+            jobs = fn()
+            matches = [j for j in jobs if title_matches(j["title"])]
+            status[name] = {"ok": True, "fetched": len(jobs), "matching": len(matches)}
+            for j in matches:
+                if j["id"] in seen_ids or norm_key(j) in seen_titles:
+                    continue
+                new.append(j); seen_ids.add(j["id"]); seen_titles.add(norm_key(j))
+        except Exception as e:  # one broken site never stops the others
+            status[name] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
+        print(name, status[name])
+
+    if first_run:
+        notify("Job alerts are on", f"Now watching {len(new)} matching postings. "
+               "You'll get a ping for each new one from here on.", tags="white_check_mark")
+    else:
+        for j in new[:25]:
+            notify(f"{j['company']}: {j['title']}"[:200], f"{j['location']}\n{j['url']}", click=j["url"] or None)
+        if len(new) > 25:
+            notify("More new postings", f"{len(new) - 25} more matches this round; check the career sites.")
+
+    if not DRY_RUN:
+        SEEN_FILE.write_text(json.dumps({"ids": sorted(seen_ids), "titles": sorted(seen_titles)}, indent=0))
+        STATUS_FILE.write_text(json.dumps({"checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                           "new_this_run": len(new), "sources": status}, indent=2))
+    else:
+        print(f"\n{len(new)} matches (dry run):")
+        for j in new:
+            print(f"- {j['company']}: {j['title']} | {j['location'][:60]} | {j['url']}")
+
+if __name__ == "__main__":
+    main()
