@@ -1,20 +1,20 @@
 {
-  "checked_at": "2026-10-29T02:52:10Z",
-  "new_this_run": 4,
+  "checked_at": "2026-10-29T09:15:53Z",
+  "new_this_run": 1,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 867,
-      "matching": 63
+      "fetched": 861,
+      "matching": 64
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 2464,
+      "fetched": 2467,
       "matching": 12
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1171,
+      "fetched": 1175,
       "matching": 1
     },
     "Amazon": {
@@ -35,7 +35,7 @@
     "Apple": {
       "ok": true,
       "fetched": 60,
-      "matching": 0
+      "matching": 1
     },
     "Google": {
       "ok": true,
@@ -44,7 +44,7 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 370,
+      "fetched": 371,
       "matching": 207
     }
   }
