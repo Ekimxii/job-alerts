@@ -5,7 +5,7 @@ and sends a push notification through ntfy.
 Run every 10 minutes by GitHub Actions (.github/workflows/jobs.yml).
 Set DRY_RUN=1 to print matches without notifying or saving.
 """
-import json, os, re, sys, time, pathlib, urllib.request, urllib.parse, http.cookiejar
+import json, os, re, sys, time, pathlib, urllib.request, urllib.error, urllib.parse, http.cookiejar
 import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).parent
@@ -95,7 +95,13 @@ def fetch(url, data=None, headers=None, opener=None, timeout=30):
         return r.read().decode("utf-8", "replace"), r.headers
 
 def fetch_json(*a, **k):
-    return json.loads(fetch(*a, **k)[0])
+    for attempt in range(3):                 # retry briefly if a site rate-limits us
+        try:
+            return json.loads(fetch(*a, **k)[0])
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or attempt == 2:
+                raise
+            time.sleep(10 * (attempt + 1))
 
 def job(company, title, url, location="", jid=None, posted=None):
     return {"company": company, "title": " ".join(title.split()), "url": url,
