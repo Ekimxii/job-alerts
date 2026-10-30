@@ -110,13 +110,13 @@ WORKDAY = {  # company: (host, tenant, site); host "myworkdaysite" means wd1.myw
     "Intel": ("intel.wd1", "intel", "External"),
     "Capital One": ("capitalone.wd12", "capitalone", "Capital_One"),
     "PayPal": ("paypal.wd1", "paypal", "jobs"),
-    "Mastercard": ("mastercard.wd1", "mastercard", "CorporateCareers"),
+    "Mastercard": ("mastercard.wd1", "mastercard", "Campus"),
     "Workday": ("workday.wd5", "workday", "Workday"),
     "Disney": ("disney.wd5", "disney", "disneycareer"),
     "Morgan Stanley": ("ms.wd5", "ms", "External"),
     "Bank of America": ("ghr.wd1", "ghr", "Lateral-US"),
     "Wells Fargo": ("myworkdaysite", "wf", "WellsFargoJobs"),
-    "Fidelity": ("fmr.wd1", "fmr", "FidelityCareers"),
+    "Fidelity": ("fmr.wd1", "fmr", "targeted"),
     "Target": ("target.wd5", "target", "targetcareers"),
     "Nike": ("nike.wd1", "nike", "nke"),
     "T-Mobile": ("tmobile.wd1", "tmobile", "External"),
@@ -129,9 +129,43 @@ WORKDAY = {  # company: (host, tenant, site); host "myworkdaysite" means wd1.myw
     "Allstate": ("allstate.wd5", "allstate", "allstate_careers"),
     "HPE": ("hpe.wd5", "hpe", "Jobsathpe"),
     "Visa": ("visa.wd5", "visa", "Visa"),
+    "Walmart": ("walmart.wd504", "walmart", "WalmartExternal"),
+    "Micron": ("micron.wd1", "micron", "external"),
+    "Boeing": ("boeing.wd1", "boeing", "EXTERNAL_CAREERS"),
+    "General Motors": ("generalmotors.wd5", "generalmotors", "careers_gm"),
+    "Johnson & Johnson": ("jj.wd5", "jj", "jj"),
+    "Merck": ("msd.wd5", "msd", "searchjobs"),
+    "Amgen": ("amgen.wd1", "amgen", "Careers"),
+    "Gilead": ("gilead.wd1", "gilead", "gileadcareers"),
+    "Regeneron": ("regeneron.wd1", "regeneron", "Careers"),
+    "Sanofi": ("sanofi.wd3", "sanofi", "SanofiCareers"),
+    "S&P Global": ("spgi.wd5", "spgi", "SPGI_Careers"),
+    "Dow Jones": ("dowjones.wd1", "dowjones", "Dow_Jones_Career"),
+    "Vanguard": ("vanguard.wd5", "vanguard", "vanguard_external"),
+    "The Hartford": ("thehartford.wd5", "thehartford", "careers_external"),
+    "Guardian Life": ("guardianlife.wd5", "guardianlife", "guardian-life-careers"),
+    "Capital Group": ("capgroup.wd1", "capgroup", "capitalgroupcareers"),
+    "USAA": ("usaa.wd1", "usaa", "USAAJOBSWD"),
+    "Philips": ("philips.wd3", "philips", "jobs-and-careers"),
+    "GE Aerospace": ("geaerospace.wd5", "geaerospace", "ge_externalsite"),
+    "GE Vernova": ("gevernova.wd5", "gevernova", "vernova_externalsite"),
+    "Marvell": ("marvell.wd1", "marvell", "MarvellCareers"),
+    "Applied Materials": ("amat.wd1", "amat", "External"),
+    "Chevron": ("chevron.wd5", "chevron", "jobs"),
+    "Southwest Airlines": ("swa.wd1", "swa", "external"),
+    "Nissan": ("alliance.wd3", "alliance", "nissanjobs"),
+    "Booz Allen": ("bah.wd1", "bah", "bah_jobs"),
+    "Unity": ("unitytech.wd1", "unitytech", "Unity"),
+    "Tencent": ("tencent.wd1", "tencent", "tencent_careers"),
+    "CrowdStrike": ("crowdstrike.wd5", "crowdstrike", "crowdstrikecareers"),
 }
 GREENHOUSE = {"Airbnb": "airbnb", "Stripe": "stripe", "Pinterest": "pinterest",
-              "Databricks": "databricks", "Lyft": "lyft", "Figma": "figma", "Scale AI": "scaleai"}
+              "Databricks": "databricks", "Lyft": "lyft", "Figma": "figma", "Scale AI": "scaleai",
+              "Epic Games": "epicgames", "Roblox": "roblox", "Riot Games": "riotgames", "Nintendo": "nintendo",
+              "Coinbase": "coinbase", "Robinhood": "robinhood", "Affirm": "affirm", "Duolingo": "duolingo",
+              "Reddit": "reddit", "DoorDash": "doordashusa", "Datadog": "datadog", "Cloudflare": "cloudflare",
+              "MongoDB": "mongodb", "Twilio": "twilio", "Samsara": "samsara", "Waymo": "waymo"}
+LEVER = {"Palantir": "palantir"}
 ASHBY = {"OpenAI": "openai", "Snowflake": "snowflake"}
 # big tech without a usable public feed, plus quant firms: covered through
 # SimplifyJobs' community-maintained internship list (slower, usually hours)
@@ -151,8 +185,8 @@ def src_workday():
             api = f"https://{host}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
             public = f"https://{host}.myworkdayjobs.com/en-US/{site}"
         try:
-            for offset in (0, 20, 40):
-                # Workday returns newest first; checking the 60 newest every 10 minutes is plenty
+            for offset in (0, 20):
+                # Workday returns newest first; the 40 newest per company is plenty for frequent checks
                 d = fetch_json(api, {"appliedFacets": {}, "limit": 20, "offset": offset,
                                      "searchText": "intern internship"})
                 for p in d.get("jobPostings") or []:
@@ -160,7 +194,7 @@ def src_workday():
                     if not path or not p.get("title"):
                         continue
                     out.append(job(company, p["title"], public + path, p.get("locationsText", ""), path))
-                time.sleep(0.3)
+                time.sleep(0.2)
         except Exception as e:  # one broken company never stops the rest
             errors.append(f"{company}: {type(e).__name__}")
     if errors:
@@ -179,6 +213,14 @@ def src_ashby():
     for company, board in ASHBY.items():
         for p in fetch_json(f"https://api.ashbyhq.com/posting-api/job-board/{board}")["jobs"]:
             out.append(job(company, p["title"], p.get("jobUrl", ""), p.get("location", ""), p.get("id")))
+    return out
+
+def src_lever():
+    out = []
+    for company, board in LEVER.items():
+        for p in fetch_json(f"https://api.lever.co/v0/postings/{board}?mode=json"):
+            out.append(job(company, p.get("text", ""), p.get("hostedUrl", ""),
+                           (p.get("categories") or {}).get("location", ""), p.get("id")))
     return out
 
 def src_amazon():
@@ -253,11 +295,11 @@ def src_simplify():
         out.append(job(company, title, p.get("url", ""), "; ".join(p.get("locations") or []), p.get("id")))
     return out
 
-SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby,
+SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby, "Lever": src_lever,
            "Amazon": src_amazon, "Microsoft": src_microsoft, "Netflix": src_netflix,
            "Apple": src_apple, "Google": src_google, "Simplify list (Meta, quant, etc.)": src_simplify}
 
-DIRECT_COMPANIES = {c.lower() for c in [*WORKDAY, *GREENHOUSE, *ASHBY,
+DIRECT_COMPANIES = {c.lower() for c in [*WORKDAY, *GREENHOUSE, *ASHBY, *LEVER,
                                         "Amazon", "Microsoft", "Netflix", "Apple", "Google"]}
 
 # ---------------- notify ----------------
