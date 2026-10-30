@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-10-30T23:02:27Z",
-  "new_this_run": 0,
+  "checked_at": "2026-10-30T23:04:40Z",
+  "new_this_run": 1,
   "sources": {
     "Workday": {
       "ok": true,
@@ -49,8 +49,8 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 273,
-      "matching": 117
+      "fetched": 284,
+      "matching": 120
     }
   }
 }
