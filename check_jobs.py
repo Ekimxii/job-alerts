@@ -23,7 +23,7 @@ FIELD_RE = re.compile(
     r"data scien|data scientist|machine learning|\bml\b|\bai\b|\bai/ml\b|artificial intelligence|"
     r"applied scien|research|\bnlp\b|natural language|deep learning|computer vision|\bllm|"
     r"data engineer|data & ai|data and ai|data platform|analytics engineer|"
-    r"quant|quantitative|trading|trader|algorithmic", re.I)
+    r"\bquant\b|quantitative|trading|trader|algorithmic", re.I)
 GRAD_ONLY_RE = re.compile(r"\bph\.?\s?d\b|doctoral|\bmba\b|\bmasters?\b|master['’]s|\bm\.?s\.?\b|postdoc|"
                           r"graduate intern|\bm1\b|\bm2\b", re.I)
 EXCLUDE_RE = re.compile(r"program manager|ux research|user research|experience research|marketing|"
@@ -142,7 +142,7 @@ def from_text_date(s):
         except Exception: pass
     return None
 
-DAY_LEVEL_SOURCES = {"Workday", "Amazon", "Netflix", "Simplify list (Meta, quant, etc.)"}
+DAY_LEVEL_SOURCES = {"Workday", "IBM", "Amazon", "Netflix", "Simplify list (Meta, quant, etc.)"}
 
 def is_fresh(j, source=""):
     if not j.get("posted"):
@@ -277,6 +277,24 @@ def src_lever():
                            (p.get("categories") or {}).get("location", ""), p.get("id"), from_epoch(p.get("createdAt"))))
     return out
 
+def src_ibm():
+    body = {"appId": "careers", "scopes": ["careers2"], "size": 100, "lang": "zz",
+            "query": {"bool": {"must": [{"simple_query_string": {"query": "intern",
+                      "fields": ["title^3", "description^2", "keywords^1", "body^1"]}}]}},
+            "sort": [{"dcdate": "desc"}, {"_score": "desc"}],
+            "_source": ["title", "url", "dcdate", "field_keyword_19"]}
+    d = fetch_json("https://www-api.ibm.com/search/api/v2", body)
+    out = []
+    for h in d.get("hits", {}).get("hits", []):
+        p = h.get("_source", {})
+        loc = p.get("field_keyword_19", "") or ""
+        cc = loc.rsplit(",", 1)[-1].strip().upper() if "," in loc else ""
+        if cc and cc not in {"US", "KR", "SG", "AU", "NZ", "IE"}:
+            continue                     # e.g. "Ehningen, DE" is Germany, not Delaware
+        out.append(job("IBM", p.get("title", ""), p.get("url", ""), p.get("field_keyword_19", ""),
+                       p.get("url"), from_iso(p.get("dcdate"))))
+    return out
+
 def src_amazon():
     d = fetch_json("https://www.amazon.jobs/en/search.json?base_query=intern&result_limit=100&sort=recent")
     return [job("Amazon", p["title"], "https://www.amazon.jobs" + p["job_path"],
@@ -354,12 +372,12 @@ def src_simplify():
                        from_epoch(p.get("date_posted"))))
     return out
 
-SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby, "Lever": src_lever,
+SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby, "Lever": src_lever, "IBM": src_ibm,
            "Amazon": src_amazon, "Microsoft": src_microsoft, "Netflix": src_netflix,
            "Apple": src_apple, "Google": src_google, "Simplify list (Meta, quant, etc.)": src_simplify}
 
 DIRECT_COMPANIES = {c.lower() for c in [*WORKDAY, *GREENHOUSE, *ASHBY, *LEVER,
-                                        "Amazon", "Microsoft", "Netflix", "Apple", "Google"]}
+                                        "Amazon", "Microsoft", "Netflix", "Apple", "Google", "IBM"]}
 
 # ---------------- notify ----------------
 def notify(title, message, click=None, tags="briefcase"):
