@@ -43,6 +43,47 @@ def title_matches(title):
         return False
     return True
 
+# ---------------- where she can work ----------------
+# Abroad is allowed only where she can get a work visa without employer sponsorship:
+#   South Korea (F-4 overseas Korean visa), Singapore (Work Holiday Pass),
+#   Australia and New Zealand (working holiday visas), Ireland (working holiday for US students).
+# Canada (IEC through a sponsor organization) and the UK (GAE sponsor) need a third party, so they're off.
+ALLOWED_ABROAD_RE = re.compile(r"korea|seoul|busan|pangyo|singapore|australia|sydney|melbourne|brisbane|"
+                               r"new zealand|auckland|wellington|ireland|dublin|cork", re.I)
+FOREIGN_RE = re.compile(
+    r"\b(uk|u\.k\.|gbr|united kingdom|england|scotland|wales|london|manchester|warwick|edinburgh|guildford|"
+    r"canada|toronto|vancouver|montreal|montréal|ottawa|waterloo|calgary|\bbc\b|ontario|quebec|qc|"
+    r"germany|berlin|munich|münchen|hamburg|france|paris|grenoble|lyon|switzerland|zurich|zürich|lausanne|geneva|"
+    r"netherlands|amsterdam|eindhoven|belgium|brussels|luxembourg|spain|madrid|barcelona|portugal|lisbon|"
+    r"italy|milan|rome|austria|vienna|denmark|copenhagen|sweden|stockholm|norway|oslo|finland|helsinki|"
+    r"poland|gdansk|gdańsk|warsaw|krakow|kraków|czech|prague|hungary|budapest|romania|bucharest|iasi|"
+    r"israel|tel aviv|haifa|india|bangalore|bengaluru|hyderabad|pune|chennai|gurgaon|noida|mumbai|delhi|"
+    r"china|prc|shanghai|beijing|shenzhen|hangzhou|taiwan|taipei|hsinchu|hong kong|japan|tokyo|osaka|"
+    r"vietnam|hanoi|ho chi minh|malaysia|kuala lumpur|penang|indonesia|jakarta|thailand|bangkok|philippines|manila|"
+    r"uae|dubai|abu dhabi|saudi|riyadh|qatar|doha|egypt|cairo|turkey|istanbul|south africa|cape town|"
+    r"nigeria|lagos|kenya|nairobi|ghana|accra|mexico|guadalajara|brazil|são paulo|sao paulo|argentina|"
+    r"buenos aires|colombia|bogotá|bogota|chile|santiago|peru|lima|costa rica)\b", re.I)
+US_RE = re.compile(r"united states|\busa?\b|remote|virtual|\b(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|"
+                   r"ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|"
+                   r"wa|wv|wi|wy|dc)\b|nyc|\bsf\b|california|new york|texas|washington|seattle|chicago|boston|"
+                   r"austin|atlanta|denver|san jose|mountain view|palo alto|sunnyvale|menlo park|redmond|bellevue", re.I)
+
+def location_ok(location):
+    """True if at least one of the posting's locations is in the US or an allowed country."""
+    loc = (location or "").strip()
+    if not loc or re.fullmatch(r"\d+ locations", loc, re.I):
+        return True                                  # unknown or "3 Locations": keep, can't tell
+    parts = [x.strip() for x in re.split(r";|•|\||/| and ", loc) if x.strip()]
+    for part in parts:
+        if part.upper() == "IN":
+            continue                                 # Microsoft's code for India
+        if ALLOWED_ABROAD_RE.search(part):
+            return True
+        if FOREIGN_RE.search(part):
+            continue                                 # clearly abroad, check the next location
+        return True                                  # US or unrecognized: keep
+    return False
+
 # ---------------- http helpers ----------------
 def fetch(url, data=None, headers=None, opener=None, timeout=30):
     h = dict(UA); h.update(headers or {})
@@ -94,11 +135,11 @@ GREENHOUSE = {"Airbnb": "airbnb", "Stripe": "stripe", "Pinterest": "pinterest",
 ASHBY = {"OpenAI": "openai", "Snowflake": "snowflake"}
 # big tech without a usable public feed, plus quant firms: covered through
 # SimplifyJobs' community-maintained internship list (slower, usually hours)
-SIMPLIFY_COMPANIES = {"meta", "uber", "linkedin", "tesla", "bloomberg", "spotify", "ibm", "oracle",
-                      "jane street", "citadel", "citadel securities", "two sigma", "hudson river trading",
-                      "jump trading", "d. e. shaw", "de shaw", "the d. e. shaw group", "imc", "optiver",
-                      "susquehanna international group (sig)", "sig", "akuna capital", "drw", "virtu financial",
-                      "millennium", "point72", "five rings", "tower research capital", "radix trading"}
+SIMPLIFY_BIG_TECH = {"meta", "uber", "linkedin", "tesla", "bloomberg", "spotify", "ibm", "oracle"}
+# well-known quant firms only (small shops left out on purpose)
+BIG_QUANT_RE = re.compile(r"jane street|citadel|two sigma|hudson river|jump trading|d\.?\s?e\.? shaw|"
+                          r"\bimc\b|optiver|susquehanna|\bsig\b|\bdrw\b|akuna|virtu|millennium|"
+                          r"point72|five rings|tower research", re.I)
 
 def src_workday():
     out, errors = [], []
@@ -173,7 +214,7 @@ def src_apple():
                        headers=h, opener=op)
         res = d.get("res", d)
         for p in res.get("searchResults", []):
-            loc = ", ".join(l.get("name", "") for l in (p.get("locations") or []) if isinstance(l, dict))
+            loc = "; ".join(l.get("name", "") for l in (p.get("locations") or []) if isinstance(l, dict))
             out.append(job("Apple", p.get("postingTitle", ""),
                            f"https://jobs.apple.com/en-us/details/{p.get('positionId')}/{p.get('transformedPostingTitle', '')}",
                            loc, p.get("positionId")))
@@ -201,8 +242,7 @@ def src_simplify():
         if not p.get("active") or not p.get("is_visible", True):
             continue
         company = p.get("company_name", "")
-        is_quant = "quant" in (p.get("category") or "").lower()
-        if company.lower() not in SIMPLIFY_COMPANIES and not is_quant:
+        if company.strip().lower() not in SIMPLIFY_BIG_TECH and not BIG_QUANT_RE.search(company):
             continue
         degrees = p.get("degrees") or []
         if degrees and not any("bachelor" in x.lower() for x in degrees):
@@ -210,7 +250,7 @@ def src_simplify():
         title = p.get("title", "")
         if not INTERN_RE.search(title):
             title = title + " (Intern)"  # everything on this list is an internship
-        out.append(job(company, title, p.get("url", ""), ", ".join(p.get("locations") or []), p.get("id")))
+        out.append(job(company, title, p.get("url", ""), "; ".join(p.get("locations") or []), p.get("id")))
     return out
 
 SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby,
@@ -247,7 +287,7 @@ def main():
         try:
             jobs = fn()
             fetched_companies |= {j["company"].lower() for j in jobs}
-            matches = [j for j in jobs if title_matches(j["title"])]
+            matches = [j for j in jobs if title_matches(j["title"]) and location_ok(j["location"])]
             status[name] = {"ok": True, "fetched": len(jobs), "matching": len(matches)}
             for j in matches:
                 if j["id"] in seen_ids or norm_key(j) in seen_titles:
