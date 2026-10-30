@@ -97,9 +97,48 @@ def fetch(url, data=None, headers=None, opener=None, timeout=30):
 def fetch_json(*a, **k):
     return json.loads(fetch(*a, **k)[0])
 
-def job(company, title, url, location="", jid=None):
+def job(company, title, url, location="", jid=None, posted=None):
     return {"company": company, "title": " ".join(title.split()), "url": url,
-            "location": location or "", "id": f"{company}:{jid or url}"}
+            "location": location or "", "id": f"{company}:{jid or url}", "posted": posted}
+
+# ---------------- freshness ----------------
+import datetime as _dt
+MAX_AGE_DAYS = 3   # only ping for postings published in the last 3 days
+
+def _utc(dt):
+    return dt if dt.tzinfo else dt.replace(tzinfo=_dt.timezone.utc)
+
+def from_iso(s):
+    try:
+        return _utc(_dt.datetime.fromisoformat(str(s).replace("Z", "+00:00")))
+    except Exception:
+        return None
+
+def from_epoch(x):
+    try:
+        x = float(x)
+        return _dt.datetime.fromtimestamp(x / 1000 if x > 1e11 else x, _dt.timezone.utc)
+    except Exception:
+        return None
+
+def from_workday(text):
+    t = (text or "").lower()
+    now = _dt.datetime.now(_dt.timezone.utc)
+    if "today" in t: return now
+    if "yesterday" in t: return now - _dt.timedelta(days=1)
+    m = re.search(r"(\d+)\+? days? ago", t)
+    return now - _dt.timedelta(days=int(m.group(1))) if m else None
+
+def from_text_date(s):
+    for fmt in ("%B %d, %Y", "%b %d, %Y"):
+        try: return _dt.datetime.strptime(s.strip(), fmt).replace(tzinfo=_dt.timezone.utc)
+        except Exception: pass
+    return None
+
+def is_fresh(j):
+    if not j.get("posted"):
+        return True                      # unknown date: don't drop it
+    return (_dt.datetime.now(_dt.timezone.utc) - j["posted"]).days <= MAX_AGE_DAYS
 
 # ---------------- sources ----------------
 WORKDAY = {  # company: (host, tenant, site); host "myworkdaysite" means wd1.myworkdaysite.com
@@ -193,7 +232,8 @@ def src_workday():
                     path = p.get("externalPath")
                     if not path or not p.get("title"):
                         continue
-                    out.append(job(company, p["title"], public + path, p.get("locationsText", ""), path))
+                    out.append(job(company, p["title"], public + path, p.get("locationsText", ""), path,
+                                   from_workday(p.get("postedOn"))))
                 time.sleep(0.2)
         except Exception as e:  # one broken company never stops the rest
             errors.append(f"{company}: {type(e).__name__}")
@@ -205,14 +245,16 @@ def src_greenhouse():
     out = []
     for company, board in GREENHOUSE.items():
         for p in fetch_json(f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs")["jobs"]:
-            out.append(job(company, p["title"], p["absolute_url"], (p.get("location") or {}).get("name", ""), p["id"]))
+            out.append(job(company, p["title"], p["absolute_url"], (p.get("location") or {}).get("name", ""), p["id"],
+                           from_iso(p.get("first_published"))))
     return out
 
 def src_ashby():
     out = []
     for company, board in ASHBY.items():
         for p in fetch_json(f"https://api.ashbyhq.com/posting-api/job-board/{board}")["jobs"]:
-            out.append(job(company, p["title"], p.get("jobUrl", ""), p.get("location", ""), p.get("id")))
+            out.append(job(company, p["title"], p.get("jobUrl", ""), p.get("location", ""), p.get("id"),
+                           from_iso(p.get("publishedAt"))))
     return out
 
 def src_lever():
@@ -220,26 +262,29 @@ def src_lever():
     for company, board in LEVER.items():
         for p in fetch_json(f"https://api.lever.co/v0/postings/{board}?mode=json"):
             out.append(job(company, p.get("text", ""), p.get("hostedUrl", ""),
-                           (p.get("categories") or {}).get("location", ""), p.get("id")))
+                           (p.get("categories") or {}).get("location", ""), p.get("id"), from_epoch(p.get("createdAt"))))
     return out
 
 def src_amazon():
     d = fetch_json("https://www.amazon.jobs/en/search.json?base_query=intern&result_limit=100&sort=recent")
     return [job("Amazon", p["title"], "https://www.amazon.jobs" + p["job_path"],
-                p.get("normalized_location") or p.get("location", ""), p.get("id_icims") or p["job_path"])
+                p.get("normalized_location") or p.get("location", ""), p.get("id_icims") or p["job_path"],
+                from_text_date(p.get("posted_date", "")))
             for p in d.get("jobs", [])]
 
 def src_microsoft():
     d = fetch_json("https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com"
                    "&query=intern&start=0&sort_by=timestamp")
     return [job("Microsoft", p["name"], f"https://apply.careers.microsoft.com/careers/job/{p['id']}",
-                "; ".join(p.get("standardizedLocations") or p.get("locations") or []), p["id"])
+                "; ".join(p.get("standardizedLocations") or p.get("locations") or []), p["id"],
+                from_epoch(p.get("postedTs") or p.get("creationTs")))
             for p in d["data"]["positions"]]
 
 def src_netflix():
     d = fetch_json("https://explore.jobs.netflix.net/api/apply/v2/jobs?domain=netflix.com"
                    "&query=intern&num=50&sort_by=timestamp")
-    return [job("Netflix", p["name"], p.get("canonicalPositionUrl", ""), p.get("location", ""), p["id"])
+    return [job("Netflix", p["name"], p.get("canonicalPositionUrl", ""), p.get("location", ""), p["id"],
+                from_epoch(p.get("t_create")))
             for p in d.get("positions", [])]
 
 def src_apple():
@@ -259,7 +304,7 @@ def src_apple():
             loc = "; ".join(l.get("name", "") for l in (p.get("locations") or []) if isinstance(l, dict))
             out.append(job("Apple", p.get("postingTitle", ""),
                            f"https://jobs.apple.com/en-us/details/{p.get('positionId')}/{p.get('transformedPostingTitle', '')}",
-                           loc, p.get("positionId")))
+                           loc, p.get("positionId"), from_iso(p.get("postDateInGMT"))))
     return out
 
 def src_google():
@@ -273,7 +318,8 @@ def src_google():
         jid = j.findtext("jobid") or ""
         url = j.findtext("url") or f"https://www.google.com/about/careers/applications/jobs/results/{jid}"
         locs = [l.findtext("city") or l.text or "" for l in j.iter("location")]
-        out.append(job("Google", title, url, "; ".join(x.strip() for x in locs if x and x.strip())[:120], jid))
+        out.append(job("Google", title, url, "; ".join(x.strip() for x in locs if x and x.strip())[:120], jid,
+                       from_iso(j.findtext("published") or "")))
     return out
 
 def src_simplify():
@@ -292,7 +338,8 @@ def src_simplify():
         title = p.get("title", "")
         if not INTERN_RE.search(title):
             title = title + " (Intern)"  # everything on this list is an internship
-        out.append(job(company, title, p.get("url", ""), "; ".join(p.get("locations") or []), p.get("id")))
+        out.append(job(company, title, p.get("url", ""), "; ".join(p.get("locations") or []), p.get("id"),
+                       from_epoch(p.get("date_posted"))))
     return out
 
 SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby, "Lever": src_lever,
@@ -336,14 +383,14 @@ def main():
                     continue
                 c = j["company"].lower()
                 is_newly_added = c in DIRECT_COMPANIES and c not in known_companies
-                (quiet if is_newly_added else new).append(j)
+                (quiet if is_newly_added or not is_fresh(j) else new).append(j)
                 seen_ids.add(j["id"]); seen_titles.add(norm_key(j))
         except Exception as e:  # one broken site never stops the others
             status[name] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
         print(name, status[name])
 
     if quiet:
-        print(f"Quietly saved {len(quiet)} postings from newly added companies")
+        print(f"Quietly saved {len(quiet)} postings (older than {MAX_AGE_DAYS} days or from newly added companies)")
     if first_run:
         notify("Job alerts are on", f"Now watching {len(new) + len(quiet)} matching postings. "
                "You'll get a ping for each new one from here on.", tags="white_check_mark")
