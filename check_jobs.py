@@ -109,7 +109,8 @@ def job(company, title, url, location="", jid=None, posted=None):
 
 # ---------------- freshness ----------------
 import datetime as _dt
-MAX_AGE_DAYS = 3   # only ping for postings published in the last 3 days
+MAX_AGE_DAYS = 1      # sites that only give a date ("Posted Today"): today or yesterday
+MAX_AGE_HOURS = 2     # sites that give an exact time: within the last 2 hours
 
 def _utc(dt):
     return dt if dt.tzinfo else dt.replace(tzinfo=_dt.timezone.utc)
@@ -141,10 +142,15 @@ def from_text_date(s):
         except Exception: pass
     return None
 
-def is_fresh(j):
+DAY_LEVEL_SOURCES = {"Workday", "Amazon", "Netflix", "Simplify list (Meta, quant, etc.)"}
+
+def is_fresh(j, source=""):
     if not j.get("posted"):
         return True                      # unknown date: don't drop it
-    return (_dt.datetime.now(_dt.timezone.utc) - j["posted"]).days <= MAX_AGE_DAYS
+    age = _dt.datetime.now(_dt.timezone.utc) - j["posted"]
+    if source in DAY_LEVEL_SOURCES:
+        return age.days <= MAX_AGE_DAYS
+    return age <= _dt.timedelta(hours=MAX_AGE_HOURS)
 
 # ---------------- sources ----------------
 WORKDAY = {  # company: (host, tenant, site); host "myworkdaysite" means wd1.myworkdaysite.com
@@ -389,14 +395,14 @@ def main():
                     continue
                 c = j["company"].lower()
                 is_newly_added = c in DIRECT_COMPANIES and c not in known_companies
-                (quiet if is_newly_added or not is_fresh(j) else new).append(j)
+                (quiet if is_newly_added or not is_fresh(j, name) else new).append(j)
                 seen_ids.add(j["id"]); seen_titles.add(norm_key(j))
         except Exception as e:  # one broken site never stops the others
             status[name] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
         print(name, status[name])
 
     if quiet:
-        print(f"Quietly saved {len(quiet)} postings (older than {MAX_AGE_DAYS} days or from newly added companies)")
+        print(f"Quietly saved {len(quiet)} postings (not brand new, or from newly added companies)")
     if first_run:
         notify("Job alerts are on", f"Now watching {len(new) + len(quiet)} matching postings. "
                "You'll get a ping for each new one from here on.", tags="white_check_mark")
