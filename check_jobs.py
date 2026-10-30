@@ -214,7 +214,7 @@ LEVER = {"Palantir": "palantir"}
 ASHBY = {"OpenAI": "openai", "Snowflake": "snowflake"}
 # big tech without a usable public feed, plus quant firms: covered through
 # SimplifyJobs' community-maintained internship list (slower, usually hours)
-SIMPLIFY_BIG_TECH = {"meta", "uber", "linkedin", "tesla", "bloomberg", "spotify", "ibm", "oracle"}
+SIMPLIFY_BIG_TECH = {"meta", "uber", "linkedin", "tesla", "bloomberg", "spotify", "ibm", "oracle", "microsoft"}
 # well-known quant firms only (small shops left out on purpose)
 BIG_QUANT_RE = re.compile(r"jane street|citadel|two sigma|hudson river|jump trading|d\.?\s?e\.? shaw|"
                           r"\bimc\b|optiver|susquehanna|\bsig\b|\bdrw\b|akuna|virtu|millennium|"
