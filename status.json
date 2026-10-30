@@ -1,20 +1,20 @@
 {
-  "checked_at": "2026-10-30T01:07:54Z",
-  "new_this_run": 5,
+  "checked_at": "2026-10-30T07:04:43Z",
+  "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 860,
-      "matching": 65
+      "fetched": 866,
+      "matching": 69
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 2492,
+      "fetched": 2485,
       "matching": 12
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1175,
+      "fetched": 1177,
       "matching": 1
     },
     "Amazon": {
@@ -23,9 +23,8 @@
       "matching": 2
     },
     "Microsoft": {
-      "ok": true,
-      "fetched": 10,
-      "matching": 6
+      "ok": false,
+      "error": "HTTPError: HTTP Error 429: Too Many Requests"
     },
     "Netflix": {
       "ok": true,
@@ -35,7 +34,7 @@
     "Apple": {
       "ok": true,
       "fetched": 60,
-      "matching": 3
+      "matching": 1
     },
     "Google": {
       "ok": true,
@@ -44,8 +43,8 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 397,
-      "matching": 231
+      "fetched": 383,
+      "matching": 217
     }
   }
 }
