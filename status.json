@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-10-30T23:43:50Z",
+  "checked_at": "2026-10-30T23:53:20Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1534,
+      "fetched": 1535,
       "matching": 127
     },
     "Greenhouse": {
@@ -21,6 +21,11 @@
       "ok": true,
       "fetched": 299,
       "matching": 0
+    },
+    "IBM": {
+      "ok": true,
+      "fetched": 70,
+      "matching": 15
     },
     "Amazon": {
       "ok": true,
