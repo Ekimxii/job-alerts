@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30T22:34:00Z",
+  "checked_at": "2026-10-30T22:43:56Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -28,8 +28,9 @@
       "matching": 2
     },
     "Microsoft": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "fetched": 10,
+      "matching": 4
     },
     "Netflix": {
       "ok": true,
@@ -48,8 +49,8 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 269,
-      "matching": 115
+      "fetched": 273,
+      "matching": 117
     }
   }
 }
