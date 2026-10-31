@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-31T18:34:03Z",
+  "checked_at": "2026-10-31T18:44:08Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -19,7 +19,7 @@
     },
     "Lever": {
       "ok": true,
-      "fetched": 299,
+      "fetched": 301,
       "matching": 0
     },
     "IBM": {
