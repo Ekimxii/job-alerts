@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-04T05:04:42Z",
+  "checked_at": "2026-11-04T05:13:54Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -24,7 +24,7 @@
     },
     "IBM": {
       "ok": true,
-      "fetched": 80,
+      "fetched": 81,
       "matching": 17
     },
     "Amazon": {
@@ -33,8 +33,9 @@
       "matching": 2
     },
     "Microsoft": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "fetched": 10,
+      "matching": 4
     },
     "Netflix": {
       "ok": true,
