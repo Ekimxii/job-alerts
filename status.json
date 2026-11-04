@@ -1,15 +1,15 @@
 {
-  "checked_at": "2026-11-04T19:55:07Z",
+  "checked_at": "2026-11-04T20:04:54Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1415,
+      "fetched": 1414,
       "matching": 85
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6584,
+      "fetched": 6588,
       "matching": 15
     },
     "Ashby": {
@@ -18,8 +18,9 @@
       "matching": 0
     },
     "Lever": {
-      "ok": false,
-      "error": "TimeoutError: The read operation timed out"
+      "ok": true,
+      "fetched": 309,
+      "matching": 0
     },
     "IBM": {
       "ok": true,
