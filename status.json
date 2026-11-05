@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-05T13:24:21Z",
+  "checked_at": "2026-11-05T13:33:59Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -9,7 +9,7 @@
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6561,
+      "fetched": 6560,
       "matching": 15
     },
     "Ashby": {
@@ -48,12 +48,13 @@
       "matching": 0
     },
     "Google": {
-      "ok": false,
-      "error": "IncompleteRead: IncompleteRead(16026887 bytes read, 4592555 more expected)"
+      "ok": true,
+      "fetched": 90,
+      "matching": 2
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 303,
+      "fetched": 301,
       "matching": 133
     }
   }
