@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-05T03:04:09Z",
-  "new_this_run": 0,
+  "checked_at": "2026-11-05T03:14:44Z",
+  "new_this_run": 5,
   "sources": {
     "Workday": {
       "ok": true,
@@ -33,9 +33,8 @@
       "matching": 2
     },
     "Microsoft": {
-      "ok": true,
-      "fetched": 10,
-      "matching": 4
+      "ok": false,
+      "error": "HTTPError: HTTP Error 429: Too Many Requests"
     },
     "Netflix": {
       "ok": true,
@@ -54,8 +53,8 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 284,
-      "matching": 120
+      "fetched": 293,
+      "matching": 126
     }
   }
 }
