@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-05T20:15:07Z",
+  "checked_at": "2026-11-05T20:24:24Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -14,12 +14,13 @@
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1186,
+      "fetched": 1187,
       "matching": 0
     },
     "Lever": {
-      "ok": false,
-      "error": "TimeoutError: The read operation timed out"
+      "ok": true,
+      "fetched": 308,
+      "matching": 1
     },
     "IBM": {
       "ok": true,
