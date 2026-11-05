@@ -1,15 +1,15 @@
 {
-  "checked_at": "2026-11-05T17:44:17Z",
+  "checked_at": "2026-11-05T17:54:45Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1467,
-      "matching": 94
+      "fetched": 1449,
+      "matching": 91
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6561,
+      "fetched": 6559,
       "matching": 15
     },
     "Ashby": {
@@ -48,9 +48,8 @@
       "matching": 0
     },
     "Google": {
-      "ok": true,
-      "fetched": 90,
-      "matching": 2
+      "ok": false,
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
