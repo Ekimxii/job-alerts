@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-11-05T07:53:57Z",
+  "checked_at": "2026-11-05T08:04:39Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1421,
+      "fetched": 1422,
       "matching": 87
     },
     "Greenhouse": {
@@ -18,9 +18,8 @@
       "matching": 0
     },
     "Lever": {
-      "ok": true,
-      "fetched": 309,
-      "matching": 0
+      "ok": false,
+      "error": "TimeoutError: The read operation timed out"
     },
     "IBM": {
       "ok": true,
@@ -54,8 +53,8 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 293,
-      "matching": 126
+      "fetched": 299,
+      "matching": 130
     }
   }
 }
