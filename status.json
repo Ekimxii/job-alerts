@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-11-07T19:54:06Z",
+  "checked_at": "2026-11-07T20:04:07Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1447,
+      "fetched": 1445,
       "matching": 96
     },
     "Greenhouse": {
@@ -48,8 +48,9 @@
       "matching": 0
     },
     "Google": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+      "ok": true,
+      "fetched": 90,
+      "matching": 2
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
