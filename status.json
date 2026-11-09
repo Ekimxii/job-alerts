@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-09T01:14:19Z",
+  "checked_at": "2026-11-09T01:24:17Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -14,7 +14,7 @@
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1188,
+      "fetched": 1189,
       "matching": 0
     },
     "Lever": {
