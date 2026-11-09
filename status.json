@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-11-09T10:58:30Z",
+  "checked_at": "2026-11-09T11:04:07Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1429,
+      "fetched": 1430,
       "matching": 96
     },
     "Greenhouse": {
@@ -43,8 +43,9 @@
       "matching": 0
     },
     "Apple": {
-      "ok": false,
-      "error": "TimeoutError: The read operation timed out"
+      "ok": true,
+      "fetched": 60,
+      "matching": 0
     },
     "Google": {
       "ok": true,
