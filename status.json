@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-09T23:14:16Z",
-  "new_this_run": 1,
+  "checked_at": "2026-11-09T23:24:32Z",
+  "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
@@ -9,7 +9,7 @@
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6567,
+      "fetched": 6569,
       "matching": 16
     },
     "Ashby": {
@@ -33,9 +33,8 @@
       "matching": 2
     },
     "Microsoft": {
-      "ok": true,
-      "fetched": 10,
-      "matching": 1
+      "ok": false,
+      "error": "HTTPError: HTTP Error 429: Too Many Requests"
     },
     "Netflix": {
       "ok": true,
