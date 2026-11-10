@@ -1,20 +1,20 @@
 {
-  "checked_at": "2026-11-10T08:53:48Z",
+  "checked_at": "2026-11-10T09:04:09Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1418,
+      "fetched": 1417,
       "matching": 94
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6573,
+      "fetched": 6575,
       "matching": 16
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1197,
+      "fetched": 1199,
       "matching": 0
     },
     "Lever": {
@@ -48,8 +48,9 @@
       "matching": 0
     },
     "Google": {
-      "ok": false,
-      "error": "IncompleteRead: IncompleteRead(13371894 bytes read, 5572165 more expected)"
+      "ok": true,
+      "fetched": 88,
+      "matching": 2
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
