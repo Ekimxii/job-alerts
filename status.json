@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-11T09:03:53Z",
-  "new_this_run": 0,
+  "checked_at": "2026-11-11T09:14:13Z",
+  "new_this_run": 1,
   "sources": {
     "Workday": {
       "ok": true,
@@ -14,7 +14,7 @@
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1201,
+      "fetched": 1202,
       "matching": 0
     },
     "Lever": {
@@ -54,8 +54,8 @@
     },
     "MIT Lincoln Lab": {
       "ok": true,
-      "fetched": 16,
-      "matching": 1
+      "fetched": 19,
+      "matching": 2
     },
     "MITRE": {
       "ok": true,
