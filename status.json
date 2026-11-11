@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-11T06:23:57Z",
-  "new_this_run": 0,
+  "checked_at": "2026-11-11T06:27:50Z",
+  "new_this_run": 1,
   "sources": {
     "Workday": {
       "ok": true,
@@ -52,10 +52,20 @@
       "fetched": 88,
       "matching": 2
     },
+    "MIT Lincoln Lab": {
+      "ok": true,
+      "fetched": 16,
+      "matching": 1
+    },
+    "MITRE": {
+      "ok": true,
+      "fetched": 100,
+      "matching": 11
+    },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 298,
-      "matching": 137
+      "fetched": 322,
+      "matching": 144
     }
   }
 }
