@@ -30,8 +30,16 @@ EXCLUDE_RE = re.compile(r"program manager|ux research|user research|experience r
                         r"trading card|collectible|security research|recruit", re.I)
 UNDERGRAD_RE = re.compile(r"\bb\.?s\.?\b|bachelor|undergrad|\bba\b|\bbs/ms\b", re.I)
 
-def title_matches(title):
-    if not INTERN_RE.search(title) or not FIELD_RE.search(title):
+RESEARCH_ORG_RE = re.compile(r"applied physics|livermore|lawrence berkeley|berkeley lab|pacific northwest|argonne|"
+                             r"brookhaven|fermilab|jet propulsion|national lab|lincoln lab|mitre|sandia|oak ridge|"
+                             r"los alamos|\bnasa\b|\bnist\b", re.I)
+# research orgs title roles by area ("Computing", "Autonomy"), so match a wider set of words there
+RESEARCH_FIELD_RE = re.compile(r"data|\bai\b|machine learning|intelligen|analytic|statistic|autonom|"
+                               r"language|cognit|computational|\bcomputing\b", re.I)
+
+def title_matches(title, company=""):
+    field_ok = FIELD_RE.search(title) or (RESEARCH_ORG_RE.search(company) and RESEARCH_FIELD_RE.search(title))
+    if not INTERN_RE.search(title) or not field_ok:
         return False
     # skip roles that are explicitly PhD / Master's / MBA only
     if GRAD_ONLY_RE.search(title) and not UNDERGRAD_RE.search(title):
@@ -142,7 +150,7 @@ def from_text_date(s):
         except Exception: pass
     return None
 
-DAY_LEVEL_SOURCES = {"Workday", "IBM", "Amazon", "Netflix", "Simplify list (Meta, quant, etc.)"}
+DAY_LEVEL_SOURCES = {"Workday", "IBM", "Amazon", "Netflix", "MIT Lincoln Lab", "MITRE", "Simplify list (Meta, quant, etc.)"}
 
 def is_fresh(j, source=""):
     if not j.get("posted"):
@@ -360,7 +368,8 @@ def src_simplify():
         if not p.get("active") or not p.get("is_visible", True):
             continue
         company = p.get("company_name", "")
-        if company.strip().lower() not in SIMPLIFY_BIG_TECH and not BIG_QUANT_RE.search(company):
+        if (company.strip().lower() not in SIMPLIFY_BIG_TECH and not BIG_QUANT_RE.search(company)
+                and not RESEARCH_ORG_RE.search(company)):
             continue
         degrees = p.get("degrees") or []
         if degrees and not any("bachelor" in x.lower() for x in degrees):
@@ -372,12 +381,46 @@ def src_simplify():
                        from_epoch(p.get("date_posted"))))
     return out
 
+def src_lincoln():
+    import email.utils
+    q = urllib.parse.quote('"Summer Research Program"')
+    text, _ = fetch(f"https://careers.ll.mit.edu/services/rss/job/?locale=en_US&keywords={q}")
+    out = []
+    for it in ET.fromstring(text.encode()).iter("item"):
+        raw = (it.findtext("title") or "").strip()
+        m = re.match(r"(.*)\(([^()]*)\)\s*$", raw)          # "... (Lexington, MA, US)"
+        name, loc = (m.group(1).strip(), m.group(2)) if m else (raw, "")
+        if "summer research program" not in name.lower() or "graduate" in name.lower().replace("undergraduate", ""):
+            continue
+        area = re.sub(r"(?i)summer research program\s*\d{0,4},?|\bintern\s*\d{4},?", "", name).strip(" ,-|")
+        link = (it.findtext("link") or "").split("?")[0]
+        try: posted = email.utils.parsedate_to_datetime(it.findtext("pubDate"))
+        except Exception: posted = None
+        out.append(job("MIT Lincoln Laboratory", f"SRP Intern: {area}", link, loc, link, posted))
+    return out
+
+def src_mitre():
+    # MITRE's Workday hides its job list; its Phenom career site exposes the same postings
+    body = {"lang": "en_us", "deviceType": "desktop", "country": "us", "pageName": "search-results",
+            "ddoKey": "refineSearch", "sortBy": "Most recent", "subsearch": "", "from": 0, "jobs": True,
+            "counts": False, "all_fields": [], "size": 100, "clearAll": False, "jdsource": "facets",
+            "pageId": "page21", "siteType": "external", "keywords": "intern", "global": True,
+            "selected_fields": {}, "locationData": {}, "refNum": "MITRUS"}
+    d = fetch_json("https://careers.mitre.org/widgets", body)
+    out = []
+    for p in d.get("refineSearch", {}).get("data", {}).get("jobs", []):
+        url = (p.get("applyUrl") or "").removesuffix("/apply")
+        out.append(job("MITRE", p.get("title", ""), url, p.get("location", ""), p.get("jobId"),
+                       from_iso(p.get("postedDate"))))
+    return out
+
 SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby, "Lever": src_lever, "IBM": src_ibm,
            "Amazon": src_amazon, "Microsoft": src_microsoft, "Netflix": src_netflix,
-           "Apple": src_apple, "Google": src_google, "Simplify list (Meta, quant, etc.)": src_simplify}
+           "Apple": src_apple, "Google": src_google, "MIT Lincoln Lab": src_lincoln, "MITRE": src_mitre, "Simplify list (Meta, quant, etc.)": src_simplify}
 
 DIRECT_COMPANIES = {c.lower() for c in [*WORKDAY, *GREENHOUSE, *ASHBY, *LEVER,
-                                        "Amazon", "Microsoft", "Netflix", "Apple", "Google", "IBM"]}
+                                        "Amazon", "Microsoft", "Netflix", "Apple", "Google", "IBM",
+                                        "MIT Lincoln Laboratory", "MITRE"]}
 
 # ---------------- notify ----------------
 def notify(title, message, click=None, tags="briefcase"):
@@ -406,7 +449,7 @@ def main():
         try:
             jobs = fn()
             fetched_companies |= {j["company"].lower() for j in jobs}
-            matches = [j for j in jobs if title_matches(j["title"]) and location_ok(j["location"])]
+            matches = [j for j in jobs if title_matches(j["title"], j["company"]) and location_ok(j["location"])]
             status[name] = {"ok": True, "fetched": len(jobs), "matching": len(matches)}
             for j in matches:
                 if j["id"] in seen_ids or norm_key(j) in seen_titles:
