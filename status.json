@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-11T14:24:45Z",
+  "checked_at": "2026-11-11T14:34:52Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -18,9 +18,8 @@
       "matching": 0
     },
     "Lever": {
-      "ok": true,
-      "fetched": 302,
-      "matching": 1
+      "ok": false,
+      "error": "TimeoutError: The read operation timed out"
     },
     "IBM": {
       "ok": true,
@@ -33,8 +32,9 @@
       "matching": 1
     },
     "Microsoft": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "fetched": 10,
+      "matching": 1
     },
     "Netflix": {
       "ok": true,
