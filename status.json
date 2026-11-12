@@ -1,20 +1,20 @@
 {
-  "checked_at": "2026-11-12T15:24:42Z",
+  "checked_at": "2026-11-12T15:34:05Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1403,
-      "matching": 89
+      "fetched": 1401,
+      "matching": 87
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6567,
+      "fetched": 6570,
       "matching": 16
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1203,
+      "fetched": 1202,
       "matching": 0
     },
     "Lever": {
