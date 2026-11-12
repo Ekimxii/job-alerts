@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-12T02:34:18Z",
+  "checked_at": "2026-11-12T02:44:20Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -64,8 +64,8 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 321,
-      "matching": 144
+      "fetched": 322,
+      "matching": 145
     }
   }
 }
