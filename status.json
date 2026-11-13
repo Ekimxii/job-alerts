@@ -1,15 +1,15 @@
 {
-  "checked_at": "2026-11-13T20:25:14Z",
+  "checked_at": "2026-11-13T20:35:05Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1353,
-      "matching": 73
+      "fetched": 1362,
+      "matching": 76
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6566,
+      "fetched": 6568,
       "matching": 13
     },
     "Ashby": {
@@ -48,9 +48,8 @@
       "matching": 0
     },
     "Google": {
-      "ok": true,
-      "fetched": 88,
-      "matching": 2
+      "ok": false,
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
     },
     "MIT Lincoln Lab": {
       "ok": true,
