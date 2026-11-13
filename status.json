@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-13T13:43:54Z",
+  "checked_at": "2026-11-13T13:54:11Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -35,7 +35,7 @@
     "Microsoft": {
       "ok": true,
       "fetched": 10,
-      "matching": 2
+      "matching": 1
     },
     "Netflix": {
       "ok": true,
