@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-13T07:44:24Z",
+  "checked_at": "2026-11-13T07:54:49Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -43,9 +43,8 @@
       "matching": 0
     },
     "Apple": {
-      "ok": true,
-      "fetched": 60,
-      "matching": 0
+      "ok": false,
+      "error": "TimeoutError: The read operation timed out"
     },
     "Google": {
       "ok": true,
