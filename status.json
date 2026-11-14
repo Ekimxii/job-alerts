@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-14T04:12:29Z",
+  "checked_at": "2026-11-14T04:22:30Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -53,9 +53,8 @@
       "matching": 2
     },
     "MIT Lincoln Lab": {
-      "ok": true,
-      "fetched": 19,
-      "matching": 2
+      "ok": false,
+      "error": "HTTPError: HTTP Error 404: Not Found"
     },
     "MITRE": {
       "ok": true,
