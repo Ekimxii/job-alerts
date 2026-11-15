@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-15T02:44:23Z",
+  "checked_at": "2026-11-15T02:54:07Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -48,9 +48,8 @@
       "matching": 0
     },
     "Google": {
-      "ok": true,
-      "fetched": 88,
-      "matching": 2
+      "ok": false,
+      "error": "IncompleteRead: IncompleteRead(13437457 bytes read, 6356813 more expected)"
     },
     "MIT Lincoln Lab": {
       "ok": true,
