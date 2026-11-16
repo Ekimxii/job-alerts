@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-11-16T14:14:09Z",
+  "checked_at": "2026-11-16T14:24:46Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1318,
+      "fetched": 1320,
       "matching": 69
     },
     "Greenhouse": {
@@ -49,7 +49,7 @@
     },
     "Google": {
       "ok": true,
-      "fetched": 65,
+      "fetched": 66,
       "matching": 2
     },
     "MIT Lincoln Lab": {
