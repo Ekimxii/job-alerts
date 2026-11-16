@@ -1,25 +1,26 @@
 {
-  "checked_at": "2026-11-16T19:44:19Z",
+  "checked_at": "2026-11-16T19:54:45Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1335,
+      "fetched": 1337,
       "matching": 74
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6495,
+      "fetched": 6499,
       "matching": 13
     },
     "Ashby": {
       "ok": true,
-      "fetched": 1208,
+      "fetched": 1207,
       "matching": 0
     },
     "Lever": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+      "ok": true,
+      "fetched": 303,
+      "matching": 1
     },
     "IBM": {
       "ok": true,
