@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-16T04:26:04Z",
+  "checked_at": "2026-11-16T04:36:11Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -33,9 +33,8 @@
       "matching": 1
     },
     "Microsoft": {
-      "ok": true,
-      "fetched": 10,
-      "matching": 3
+      "ok": false,
+      "error": "HTTPError: HTTP Error 429: Too Many Requests"
     },
     "Netflix": {
       "ok": true,
@@ -43,8 +42,9 @@
       "matching": 0
     },
     "Apple": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 502: Bad Gateway"
+      "ok": true,
+      "fetched": 60,
+      "matching": 0
     },
     "Google": {
       "ok": true,
