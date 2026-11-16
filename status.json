@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-16T04:14:08Z",
+  "checked_at": "2026-11-16T04:23:54Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -43,9 +43,8 @@
       "matching": 0
     },
     "Apple": {
-      "ok": true,
-      "fetched": 60,
-      "matching": 0
+      "ok": false,
+      "error": "HTTPError: HTTP Error 502: Bad Gateway"
     },
     "Google": {
       "ok": true,
