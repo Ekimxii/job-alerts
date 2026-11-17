@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-17T10:44:58Z",
-  "new_this_run": 1,
+  "checked_at": "2026-11-17T10:54:03Z",
+  "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
@@ -9,7 +9,7 @@
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6511,
+      "fetched": 6509,
       "matching": 13
     },
     "Ashby": {
@@ -19,7 +19,7 @@
     },
     "Lever": {
       "ok": false,
-      "error": "TimeoutError: The read operation timed out"
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
     },
     "IBM": {
       "ok": true,
