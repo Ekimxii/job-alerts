@@ -1,15 +1,15 @@
 {
-  "checked_at": "2026-11-18T15:04:16Z",
+  "checked_at": "2026-11-18T15:14:05Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1333,
-      "matching": 78
+      "fetched": 1335,
+      "matching": 79
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6540,
+      "fetched": 6541,
       "matching": 14
     },
     "Ashby": {
@@ -18,8 +18,9 @@
       "matching": 0
     },
     "Lever": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 502: Bad Gateway"
+      "ok": true,
+      "fetched": 301,
+      "matching": 1
     },
     "IBM": {
       "ok": true,
@@ -63,7 +64,7 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 318,
+      "fetched": 317,
       "matching": 147
     }
   }
