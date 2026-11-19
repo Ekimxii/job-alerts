@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-11-19T10:39:06Z",
+  "checked_at": "2026-11-19T10:44:28Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1093,
-      "matching": 71
+      "fetched": 1335,
+      "matching": 85
     },
     "Greenhouse": {
       "ok": true,
@@ -35,7 +35,7 @@
     "Microsoft": {
       "ok": true,
       "fetched": 10,
-      "matching": 6
+      "matching": 5
     },
     "Netflix": {
       "ok": true,
