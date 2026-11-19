@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-11-19T16:14:11Z",
+  "checked_at": "2026-11-19T16:24:31Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1343,
-      "matching": 88
+      "fetched": 1323,
+      "matching": 80
     },
     "Greenhouse": {
       "ok": true,
@@ -18,9 +18,8 @@
       "matching": 0
     },
     "Lever": {
-      "ok": true,
-      "fetched": 308,
-      "matching": 1
+      "ok": false,
+      "error": "HTTPError: HTTP Error 502: Bad Gateway"
     },
     "IBM": {
       "ok": true,
