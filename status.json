@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-20T16:24:29Z",
+  "checked_at": "2026-11-20T16:34:09Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -9,7 +9,7 @@
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6505,
+      "fetched": 6502,
       "matching": 14
     },
     "Ashby": {
@@ -64,8 +64,8 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 314,
-      "matching": 149
+      "fetched": 313,
+      "matching": 148
     }
   }
 }
