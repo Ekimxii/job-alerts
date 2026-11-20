@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-20T20:05:04Z",
+  "checked_at": "2026-11-20T20:14:05Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -18,8 +18,9 @@
       "matching": 1
     },
     "Lever": {
-      "ok": false,
-      "error": "TimeoutError: The read operation timed out"
+      "ok": true,
+      "fetched": 308,
+      "matching": 1
     },
     "IBM": {
       "ok": true,
@@ -34,7 +35,7 @@
     "Microsoft": {
       "ok": true,
       "fetched": 10,
-      "matching": 3
+      "matching": 4
     },
     "Netflix": {
       "ok": true,
