@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-11-21T14:43:56Z",
+  "checked_at": "2026-11-21T15:02:14Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1378,
-      "matching": 94
+      "fetched": 1302,
+      "matching": 82
     },
     "Greenhouse": {
       "ok": true,
@@ -53,9 +53,8 @@
       "matching": 2
     },
     "MIT Lincoln Lab": {
-      "ok": true,
-      "fetched": 16,
-      "matching": 2
+      "ok": false,
+      "error": "HTTPError: HTTP Error 503: Service Unavailable"
     },
     "MITRE": {
       "ok": true,
