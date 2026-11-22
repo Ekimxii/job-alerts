@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-22T19:14:47Z",
+  "checked_at": "2026-11-22T19:23:44Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -60,7 +60,7 @@
     "MITRE": {
       "ok": true,
       "fetched": 100,
-      "matching": 12
+      "matching": 11
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
