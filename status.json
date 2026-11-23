@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-11-23T08:34:32Z",
+  "checked_at": "2026-11-23T08:43:53Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1352,
+      "fetched": 1351,
       "matching": 88
     },
     "Greenhouse": {
