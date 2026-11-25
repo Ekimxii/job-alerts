@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-25T05:24:05Z",
+  "checked_at": "2026-11-25T05:34:22Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -23,8 +23,9 @@
       "matching": 1
     },
     "IBM": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 502: Bad Gateway"
+      "ok": true,
+      "fetched": 73,
+      "matching": 20
     },
     "Amazon": {
       "ok": true,
@@ -63,7 +64,7 @@
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 505,
+      "fetched": 504,
       "matching": 215
     }
   }
