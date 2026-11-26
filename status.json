@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-26T03:04:07Z",
+  "checked_at": "2026-11-26T03:14:18Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -9,7 +9,7 @@
     },
     "Greenhouse": {
       "ok": true,
-      "fetched": 6456,
+      "fetched": 6457,
       "matching": 13
     },
     "Ashby": {
@@ -23,8 +23,9 @@
       "matching": 1
     },
     "IBM": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 502: Bad Gateway"
+      "ok": true,
+      "fetched": 77,
+      "matching": 19
     },
     "Amazon": {
       "ok": true,
