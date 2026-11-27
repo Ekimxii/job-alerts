@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-27T06:14:20Z",
-  "new_this_run": 0,
+  "checked_at": "2026-11-27T06:17:54Z",
+  "new_this_run": 1,
   "sources": {
     "Workday": {
       "ok": true,
-      "fetched": 1347,
-      "matching": 77
+      "fetched": 1365,
+      "matching": 81
     },
     "Greenhouse": {
       "ok": true,
       "fetched": 6471,
-      "matching": 13
+      "matching": 14
     },
     "Ashby": {
       "ok": true,
@@ -25,12 +25,12 @@
     "IBM": {
       "ok": true,
       "fetched": 78,
-      "matching": 19
+      "matching": 20
     },
     "Amazon": {
       "ok": true,
       "fetched": 100,
-      "matching": 1
+      "matching": 2
     },
     "Microsoft": {
       "ok": true,
@@ -54,13 +54,18 @@
     },
     "MIT Lincoln Lab": {
       "ok": true,
-      "fetched": 19,
-      "matching": 3
+      "fetched": 18,
+      "matching": 4
     },
     "MITRE": {
       "ok": true,
       "fetched": 100,
       "matching": 9
+    },
+    "ASML": {
+      "ok": true,
+      "fetched": 0,
+      "matching": 0
     },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
