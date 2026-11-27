@@ -38,8 +38,13 @@ RESEARCH_ORG_RE = re.compile(r"applied physics|livermore|lawrence berkeley|berke
 RESEARCH_FIELD_RE = re.compile(r"data|\bai\b|machine learning|intelligen|analytic|statistic|autonom|"
                                r"language|cognit|computational|\bcomputing\b", re.I)
 
+# data analyst / analytics roles count only at the very top companies (keeps alerts from flooding)
+TOP_ANALYTICS_COMPANIES = {"meta", "apple", "amazon", "netflix", "google", "microsoft", "samsung"}
+ANALYTICS_RE = re.compile(r"data analy|analytics|business analyst", re.I)
+
 def title_matches(title, company=""):
-    field_ok = FIELD_RE.search(title) or (RESEARCH_ORG_RE.search(company) and RESEARCH_FIELD_RE.search(title))
+    field_ok = (FIELD_RE.search(title) or (RESEARCH_ORG_RE.search(company) and RESEARCH_FIELD_RE.search(title))
+                or (company.strip().lower() in TOP_ANALYTICS_COMPANIES and ANALYTICS_RE.search(title)))
     if not INTERN_RE.search(title) or not field_ok:
         return False
     # skip roles that are explicitly PhD / Master's / MBA only
