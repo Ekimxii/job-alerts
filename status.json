@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-27T06:24:30Z",
+  "checked_at": "2026-11-27T06:27:04Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -33,8 +33,9 @@
       "matching": 2
     },
     "Microsoft": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "fetched": 10,
+      "matching": 5
     },
     "Netflix": {
       "ok": true,
@@ -66,10 +67,20 @@
       "fetched": 0,
       "matching": 0
     },
+    "Honda": {
+      "ok": true,
+      "fetched": 100,
+      "matching": 1
+    },
+    "Hyundai": {
+      "ok": true,
+      "fetched": 20,
+      "matching": 0
+    },
     "Simplify list (Meta, quant, etc.)": {
       "ok": true,
-      "fetched": 487,
-      "matching": 205
+      "fetched": 529,
+      "matching": 207
     }
   }
 }
