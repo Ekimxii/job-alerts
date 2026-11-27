@@ -126,7 +126,8 @@ def _utc(dt):
 
 def from_iso(s):
     try:
-        return _utc(_dt.datetime.fromisoformat(str(s).replace("Z", "+00:00")))
+        s = re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", str(s).replace("Z", "+00:00"))   # "+0000" -> "+00:00"
+        return _utc(_dt.datetime.fromisoformat(s))
     except Exception:
         return None
 
@@ -151,7 +152,7 @@ def from_text_date(s):
         except Exception: pass
     return None
 
-DAY_LEVEL_SOURCES = {"Workday", "IBM", "Amazon", "Netflix", "MIT Lincoln Lab", "MITRE", "ASML", "Simplify list (Meta, quant, etc.)"}
+DAY_LEVEL_SOURCES = {"Workday", "IBM", "Amazon", "Netflix", "MIT Lincoln Lab", "MITRE", "ASML", "Honda", "Hyundai", "Simplify list (Meta, quant, etc.)"}
 
 def is_fresh(j, source=""):
     if not j.get("posted"):
@@ -231,7 +232,9 @@ ASHBY = {"OpenAI": "openai", "Snowflake": "snowflake"}
 # big tech without a usable public feed, plus quant firms: covered through
 # SimplifyJobs' community-maintained internship list (slower, usually hours)
 SIMPLIFY_BIG_TECH = {"meta", "uber", "linkedin", "tesla", "bloomberg", "spotify", "ibm", "oracle", "microsoft",
-                     "bytedance", "tiktok"}
+                     "bytedance", "tiktok",
+                     # big chip and auto companies whose own sites have no usable public feed
+                     "qualcomm", "amd", "sk hynix", "ford motor company", "toyota", "toyota research institute"}
 # well-known quant firms only (small shops left out on purpose)
 BIG_QUANT_RE = re.compile(r"jane street|citadel|two sigma|hudson river|jump trading|d\.?\s?e\.? shaw|"
                           r"\bimc\b|optiver|susquehanna|\bsig\b|\bdrw\b|akuna|virtu|millennium|"
@@ -417,6 +420,34 @@ def src_mitre():
                        from_iso(p.get("postedDate"))))
     return out
 
+def src_honda():
+    # American Honda's Phenom career site, same search widget as MITRE's
+    body = {"lang": "en_us", "deviceType": "desktop", "country": "us", "pageName": "search-results",
+            "ddoKey": "refineSearch", "sortBy": "Most recent", "subsearch": "", "from": 0, "jobs": True,
+            "counts": False, "all_fields": [], "size": 100, "clearAll": False, "jdsource": "facets",
+            "pageId": "page4", "siteType": "external", "keywords": "intern", "global": True,
+            "selected_fields": {}, "locationData": {}, "refNum": "AHMAHMUS"}
+    d = fetch_json("https://careers.honda.com/widgets", body)
+    return [job("Honda", p.get("title", ""), f"https://careers.honda.com/us/en/job/{p.get('jobId')}",
+                p.get("cityStateCountry") or p.get("location", ""), p.get("jobId"), from_iso(p.get("postedDate")))
+            for p in d.get("refineSearch", {}).get("data", {}).get("jobs", [])]
+
+def src_hyundai():
+    # Hyundai/Kia/Genesis Americas (HMA, HATCI, HMMA, HMGMA) share one SuccessFactors site; its RSS feed
+    # lists the newest postings
+    import email.utils
+    text, _ = fetch("https://careers-americas.hyundai.com/services/rss/job/?locale=en_US&keywords=intern")
+    out = []
+    for it in ET.fromstring(text.encode()).iter("item"):
+        raw = (it.findtext("title") or "").strip()
+        m = re.match(r"(.*)\(([^()]*)\)\s*$", raw)          # "Intern, Data Science (Fountain Valley, CA, US, 92708)"
+        name, loc = (m.group(1).strip(), m.group(2)) if m else (raw, "")
+        link = (it.findtext("link") or "").split("?")[0]
+        try: posted = email.utils.parsedate_to_datetime(it.findtext("pubDate"))
+        except Exception: posted = None
+        out.append(job("Hyundai", name, link, loc, link, posted))
+    return out
+
 def src_asml():
     # ASML has no public job API: its job sitemap lists every posting with a last-modified date,
     # and each posting page carries the real title, location, country and post date
@@ -452,11 +483,11 @@ def src_asml():
 
 SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby, "Lever": src_lever, "IBM": src_ibm,
            "Amazon": src_amazon, "Microsoft": src_microsoft, "Netflix": src_netflix,
-           "Apple": src_apple, "Google": src_google, "MIT Lincoln Lab": src_lincoln, "MITRE": src_mitre, "ASML": src_asml, "Simplify list (Meta, quant, etc.)": src_simplify}
+           "Apple": src_apple, "Google": src_google, "MIT Lincoln Lab": src_lincoln, "MITRE": src_mitre, "ASML": src_asml, "Honda": src_honda, "Hyundai": src_hyundai, "Simplify list (Meta, quant, etc.)": src_simplify}
 
 DIRECT_COMPANIES = {c.lower() for c in [*WORKDAY, *GREENHOUSE, *ASHBY, *LEVER,
                                         "Amazon", "Microsoft", "Netflix", "Apple", "Google", "IBM",
-                                        "MIT Lincoln Laboratory", "MITRE", "ASML"]}
+                                        "MIT Lincoln Laboratory", "MITRE", "ASML", "Honda", "Hyundai"]}
 
 # ---------------- notify ----------------
 def notify(title, message, click=None, tags="briefcase"):
