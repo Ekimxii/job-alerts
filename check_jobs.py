@@ -22,7 +22,8 @@ INTERN_RE = re.compile(r"\bintern(s|ship|ships)?\b|\bco-?op\b|student researcher
 FIELD_RE = re.compile(
     r"data scien|data scientist|machine learning|\bml\b|\bai\b|\bai/ml\b|artificial intelligence|"
     r"applied scien|research|\bnlp\b|natural language|deep learning|computer vision|\bllm|"
-    r"data engineer|data & ai|data and ai|data platform|analytics engineer|"
+    r"data engineer|data & ai|data and ai|data platform|analytics engineer|database engineer|"
+    r"business intelligence|\bbie\b|artificial general intelligence|\bagi\b|delivery consultant|"
     r"\bquant\b|quantitative|trading|trader|algorithmic", re.I)
 GRAD_ONLY_RE = re.compile(r"\bph\.?\s?d\b|doctoral|\bmba\b|\bmasters?\b|master['’]s|\bm\.?s\.?\b|postdoc|"
                           r"graduate intern|\bm1\b|\bm2\b", re.I)
@@ -150,7 +151,7 @@ def from_text_date(s):
         except Exception: pass
     return None
 
-DAY_LEVEL_SOURCES = {"Workday", "IBM", "Amazon", "Netflix", "MIT Lincoln Lab", "MITRE", "Simplify list (Meta, quant, etc.)"}
+DAY_LEVEL_SOURCES = {"Workday", "IBM", "Amazon", "Netflix", "MIT Lincoln Lab", "MITRE", "ASML", "Simplify list (Meta, quant, etc.)"}
 
 def is_fresh(j, source=""):
     if not j.get("posted"):
@@ -217,6 +218,7 @@ WORKDAY = {  # company: (host, tenant, site); host "myworkdaysite" means wd1.myw
     "Unity": ("unitytech.wd1", "unitytech", "Unity"),
     "Tencent": ("tencent.wd1", "tencent", "tencent_careers"),
     "CrowdStrike": ("crowdstrike.wd5", "crowdstrike", "crowdstrikecareers"),
+    "Samsung": ("sec.wd3", "sec", "Samsung_Careers"),
 }
 GREENHOUSE = {"Airbnb": "airbnb", "Stripe": "stripe", "Pinterest": "pinterest",
               "Databricks": "databricks", "Lyft": "lyft", "Figma": "figma", "Scale AI": "scaleai",
@@ -415,13 +417,46 @@ def src_mitre():
                        from_iso(p.get("postedDate"))))
     return out
 
+def src_asml():
+    # ASML has no public job API: its job sitemap lists every posting with a last-modified date,
+    # and each posting page carries the real title, location, country and post date
+    xml_text, _ = fetch("https://www.asml.com/api/job-posting-sitemap", timeout=60)
+    ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+    cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=3)
+    out = []
+    for u in ET.fromstring(xml_text.encode()).findall("s:url", ns):
+        url = (u.findtext("s:loc", "", ns) or "").strip()
+        m = re.search(r"/en/careers/find-your-job/(.+)-(j\d+)$", url)
+        if not m:
+            continue
+        changed = from_iso(u.findtext("s:lastmod", "", ns))
+        if changed and changed < cutoff:
+            continue                     # only open pages that changed recently
+        if not title_matches(m.group(1).replace("-", " "), "ASML"):
+            continue                     # rough title from the URL; the real one is read below
+        html, _ = fetch(url, timeout=30)
+        i = html.find('"jobData"')
+        if i < 0:
+            continue
+        block = html[i:i + 4000]
+        def grab(key):
+            mm = re.search(r'"%s":"((?:[^"\\]|\\.)*)"' % key, block)
+            try: return json.loads('"' + mm.group(1) + '"') if mm else ""
+            except Exception: return mm.group(1)
+        if grab("country").upper() not in {"US", "KR", "SG", "AU", "NZ", "IE"} and not ALLOWED_ABROAD_RE.search(grab("location")):
+            continue                     # e.g. Veldhoven (NL), Hsinchu (TW)
+        out.append(job("ASML", grab("displayJobTitle") or m.group(1).replace("-", " "), url,
+                       grab("location"), m.group(2), from_iso(grab("datePosted")) or changed))
+        time.sleep(0.2)
+    return out
+
 SOURCES = {"Workday": src_workday, "Greenhouse": src_greenhouse, "Ashby": src_ashby, "Lever": src_lever, "IBM": src_ibm,
            "Amazon": src_amazon, "Microsoft": src_microsoft, "Netflix": src_netflix,
-           "Apple": src_apple, "Google": src_google, "MIT Lincoln Lab": src_lincoln, "MITRE": src_mitre, "Simplify list (Meta, quant, etc.)": src_simplify}
+           "Apple": src_apple, "Google": src_google, "MIT Lincoln Lab": src_lincoln, "MITRE": src_mitre, "ASML": src_asml, "Simplify list (Meta, quant, etc.)": src_simplify}
 
 DIRECT_COMPANIES = {c.lower() for c in [*WORKDAY, *GREENHOUSE, *ASHBY, *LEVER,
                                         "Amazon", "Microsoft", "Netflix", "Apple", "Google", "IBM",
-                                        "MIT Lincoln Laboratory", "MITRE"]}
+                                        "MIT Lincoln Laboratory", "MITRE", "ASML"]}
 
 # ---------------- notify ----------------
 def notify(title, message, click=None, tags="briefcase"):
