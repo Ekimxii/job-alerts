@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-28T13:14:24Z",
+  "checked_at": "2026-11-28T13:24:21Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
@@ -69,7 +69,7 @@
     },
     "Honda": {
       "ok": true,
-      "fetched": 100,
+      "fetched": 8,
       "matching": 1
     },
     "Hyundai": {
