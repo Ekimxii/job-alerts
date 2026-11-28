@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-11-28T07:52:30Z",
+  "checked_at": "2026-11-28T08:02:43Z",
   "new_this_run": 0,
   "sources": {
     "Workday": {
       "ok": true,
       "fetched": 121,
-      "matching": 6
+      "matching": 3
     },
     "Greenhouse": {
       "ok": true,
@@ -68,8 +68,9 @@
       "matching": 0
     },
     "Honda": {
-      "ok": false,
-      "error": "HTTPError: HTTP Error 502: Bad Gateway"
+      "ok": true,
+      "fetched": 100,
+      "matching": 1
     },
     "Hyundai": {
       "ok": true,
